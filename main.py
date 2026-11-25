@@ -849,6 +849,10 @@ def main():
 
     app.add_error_handler(error_handler)
 
+    # Python 3.12+ (and 3.14 on Render) no longer creates an event loop
+    # automatically, so we create one ourselves before polling starts.
+    asyncio.set_event_loop(asyncio.new_event_loop())
+
     logger.info("Bot started ✅")
     app.run_polling(drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
 
