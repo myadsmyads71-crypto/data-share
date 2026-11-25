@@ -30,7 +30,7 @@ import string
 import threading
 import time
 from datetime import datetime, timedelta, timezone
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from postgrest.exceptions import APIError
 from supabase import Client, create_client
@@ -808,11 +808,16 @@ class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", "2")
+        self.send_header("Connection", "close")
         self.end_headers()
         self.wfile.write(b"OK")
 
     def do_HEAD(self):
         self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", "2")
+        self.send_header("Connection", "close")
         self.end_headers()
 
     def log_message(self, *args):  # keep the console quiet
@@ -821,7 +826,7 @@ class HealthHandler(BaseHTTPRequestHandler):
 
 def start_health_server():
     port = int(os.environ.get("PORT", "10000"))
-    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    server = ThreadingHTTPServer(("0.0.0.0", port), HealthHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     logger.info("Health server running on port %s", port)
 
