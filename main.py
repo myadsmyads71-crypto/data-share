@@ -428,12 +428,21 @@ async def verify_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             db_create_or_get_user, user.id, user.username, user.first_name
         )
     except Exception as e:  # database / network problem
-        logger.error("Database error while verifying %s: %s", user.id, e)
+        logger.exception("Database error while verifying %s", user.id)
         await safe_edit(
             query,
             "⚠️ Database error. Please tap Verify again in a moment.",
             join_keyboard(),
         )
+        # Send the real reason to the admin only (never to the user)
+        try:
+            await context.bot.send_message(
+                ADMIN_ID,
+                f"⚠️ Database error while verifying user {user.id}\n\n"
+                f"{type(e).__name__}: {str(e)[:900]}",
+            )
+        except TelegramError:
+            pass
         return
 
     pin = row["pin"]
